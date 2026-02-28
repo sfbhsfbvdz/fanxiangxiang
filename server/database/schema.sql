@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
     avatar VARCHAR(255),
+    role VARCHAR(20) DEFAULT 'customer',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -74,6 +75,7 @@ CREATE TABLE IF NOT EXISTS orders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     restaurant_id INTEGER NOT NULL,
+    rider_id INTEGER REFERENCES users(id),
     status VARCHAR(20) DEFAULT 'pending',
     total_price DECIMAL(10,2) NOT NULL,
     delivery_fee DECIMAL(10,2) DEFAULT 0.00,
@@ -87,6 +89,7 @@ CREATE TABLE IF NOT EXISTS orders (
 
 CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_restaurant_id ON orders(restaurant_id);
 
 -- 订单明细表
 CREATE TABLE IF NOT EXISTS order_items (
@@ -116,3 +119,19 @@ CREATE TABLE IF NOT EXISTS addresses (
 );
 
 CREATE INDEX IF NOT EXISTS idx_addresses_user_id ON addresses(user_id);
+
+-- 骑手表
+CREATE TABLE IF NOT EXISTS riders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER UNIQUE NOT NULL REFERENCES users(id),
+    status VARCHAR(20) DEFAULT 'offline',
+    vehicle_type VARCHAR(20) DEFAULT 'bike',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 餐厅管理员表（商家与餐厅绑定）
+CREATE TABLE IF NOT EXISTS restaurant_managers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER UNIQUE NOT NULL REFERENCES users(id),
+    restaurant_id INTEGER NOT NULL REFERENCES restaurants(id)
+);

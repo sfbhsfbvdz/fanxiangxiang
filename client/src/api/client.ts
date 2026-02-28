@@ -1,4 +1,5 @@
-const API_BASE_URL = '/api';
+// 生产环境用 VITE_API_URL，开发环境走 Vite proxy
+const API_BASE_URL = (import.meta.env.VITE_API_URL ?? '') + '/api';
 
 const TOKEN_KEY = 'fanfou_token';
 

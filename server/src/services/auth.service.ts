@@ -39,6 +39,7 @@ export class AuthService {
       userId: user.id,
       username: user.username,
       email: user.email,
+      role: user.role || 'customer',
     });
 
     return { token, user };
@@ -50,7 +51,7 @@ export class AuthService {
 
     // Find user by email
     const userWithPassword = db.prepare(
-      `SELECT id, username, email, password_hash, phone, avatar, created_at, updated_at
+      `SELECT id, username, email, password_hash, phone, avatar, role, created_at, updated_at
        FROM users WHERE email = ?`
     ).get(email) as {
       id: number;
@@ -59,6 +60,7 @@ export class AuthService {
       password_hash: string;
       phone: string | null;
       avatar: string | null;
+      role: string;
       created_at: string;
       updated_at: string;
     } | undefined;
@@ -80,15 +82,17 @@ export class AuthService {
       email: userWithPassword.email,
       phone: userWithPassword.phone || undefined,
       avatar: userWithPassword.avatar || undefined,
+      role: userWithPassword.role || 'customer',
       createdAt: userWithPassword.created_at,
       updatedAt: userWithPassword.updated_at,
     };
 
-    // Generate token
+    // Generate token with role
     const token = generateToken({
       userId: user.id,
       username: user.username,
       email: user.email,
+      role: user.role || 'customer',
     });
 
     return { token, user };
@@ -97,7 +101,7 @@ export class AuthService {
   // Get user by ID
   getUserById(id: number): User {
     const row = db.prepare(
-      `SELECT id, username, email, phone, avatar, created_at, updated_at
+      `SELECT id, username, email, phone, avatar, role, created_at, updated_at
        FROM users WHERE id = ?`
     ).get(id) as {
       id: number;
@@ -105,6 +109,7 @@ export class AuthService {
       email: string;
       phone: string | null;
       avatar: string | null;
+      role: string;
       created_at: string;
       updated_at: string;
     };
@@ -115,6 +120,7 @@ export class AuthService {
       email: row.email,
       phone: row.phone || undefined,
       avatar: row.avatar || undefined,
+      role: row.role || 'customer',
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };

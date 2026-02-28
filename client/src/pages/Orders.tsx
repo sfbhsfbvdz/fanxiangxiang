@@ -96,7 +96,7 @@ export const Orders = () => {
           </div>
           <p className="text-gray-500">还没有订单记录</p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/home')}
             className="mt-4 text-emerald-600 font-semibold hover:underline"
           >
             去点餐

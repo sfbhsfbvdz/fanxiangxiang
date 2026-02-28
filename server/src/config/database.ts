@@ -20,6 +20,25 @@ export const db = new Database(dbPath);
 // Enable foreign keys
 db.pragma('foreign_keys = ON');
 
+function runMigrations(): void {
+  // Add role column to users if it doesn't exist
+  const userCols = db.pragma('table_info(users)') as { name: string }[];
+  if (!userCols.some(c => c.name === 'role')) {
+    db.exec(`ALTER TABLE users ADD COLUMN role VARCHAR(20) DEFAULT 'customer'`);
+    console.log('✅ Migration: added users.role');
+  }
+
+  // Add rider_id column to orders if it doesn't exist
+  const orderCols = db.pragma('table_info(orders)') as { name: string }[];
+  if (!orderCols.some(c => c.name === 'rider_id')) {
+    db.exec(`ALTER TABLE orders ADD COLUMN rider_id INTEGER REFERENCES users(id)`);
+    console.log('✅ Migration: added orders.rider_id');
+  }
+
+  // Add restaurant_id index on orders if not exists (schema already has it)
+  // New tables (riders, restaurant_managers) are handled by schema.sql via CREATE TABLE IF NOT EXISTS
+}
+
 export function initDatabase(): void {
   const schemaPath = path.resolve(__dirname, '../../database/schema.sql');
 
@@ -30,6 +49,9 @@ export function initDatabase(): void {
   } else {
     console.warn('⚠️ Schema file not found, skipping initialization');
   }
+
+  // Run migrations for existing databases
+  runMigrations();
 
   // Check if we need to seed data
   const restaurantCount = db.prepare('SELECT COUNT(*) as count FROM restaurants').get() as { count: number };

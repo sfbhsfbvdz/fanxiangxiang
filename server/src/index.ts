@@ -7,9 +7,14 @@ import routes from './routes/index.js';
 
 const app = express();
 
-// Middleware
+// Middleware — CORS_ORIGIN 支持逗号分隔的多个域名
+const allowedOrigins = env.CORS_ORIGIN.split(',').map(o => o.trim());
 app.use(cors({
-  origin: env.CORS_ORIGIN,
+  origin: (origin, cb) => {
+    // 允许无 origin（curl / 移动端）或在白名单中
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    cb(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true,
 }));
 app.use(express.json());

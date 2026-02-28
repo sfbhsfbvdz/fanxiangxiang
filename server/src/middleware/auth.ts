@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
-import { UnauthorizedError } from './error.js';
+import { UnauthorizedError, ForbiddenError } from './error.js';
 
 export interface JwtPayload {
   userId: number;
   username: string;
   email: string;
+  role: string;
 }
 
 // Extend Express Request type
@@ -40,6 +41,19 @@ export function authenticate(req: Request, _res: Response, next: NextFunction): 
     }
     throw new UnauthorizedError('认证失败');
   }
+}
+
+// Role-based access control middleware
+export function requireRole(...roles: string[]) {
+  return (req: Request, _res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      throw new UnauthorizedError('未提供认证令牌');
+    }
+    if (!roles.includes(req.user.role)) {
+      throw new ForbiddenError('权限不足');
+    }
+    next();
+  };
 }
 
 // Optional authentication - doesn't throw if no token

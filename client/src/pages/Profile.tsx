@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Settings, CreditCard, MapPin, Heart, LogOut, ChevronRight } from 'lucide-react';
+import { User, Settings, CreditCard, MapPin, Heart, LogOut, ChevronRight, Store, Bike, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -80,6 +80,16 @@ export const Profile = () => {
 
   const avatarText = user?.username?.charAt(0).toUpperCase() ?? '我';
 
+  const ROLE_HOME: Record<string, string> = {
+    merchant: '/merchant', rider: '/rider', admin: '/admin', customer: '/home',
+  };
+  const portalConfig: Record<string, { label: string; path: string; Icon: React.ElementType; color: string; bg: string }> = {
+    merchant: { label: '进入商家后台',   path: '/merchant', Icon: Store,       color: 'text-orange-600', bg: 'bg-orange-50' },
+    rider:    { label: '进入骑手工作台', path: '/rider',    Icon: Bike,        color: 'text-blue-600',   bg: 'bg-blue-50' },
+    admin:    { label: '进入管理后台',   path: '/admin',    Icon: ShieldCheck, color: 'text-purple-600', bg: 'bg-purple-50' },
+  };
+  const portal = portalConfig[user?.role ?? ''];
+
   return (
     <div className="pb-24 pt-8 px-4 max-w-md mx-auto min-h-screen bg-gray-50">
       {/* User Avatar & Info */}
@@ -101,6 +111,19 @@ export const Profile = () => {
           {user?.phone && <p className="text-xs text-gray-400 mt-0.5">{user.phone}</p>}
         </div>
       </div>
+
+      {portal && (
+        <button
+          onClick={() => navigate(portal.path)}
+          className={`w-full flex items-center gap-3 p-4 rounded-2xl mb-4 ${portal.bg} border border-transparent hover:brightness-95 transition-all`}
+        >
+          <div className={`p-2 rounded-xl bg-white/70 ${portal.color}`}>
+            <portal.Icon size={20} />
+          </div>
+          <span className={`font-semibold flex-1 text-left ${portal.color}`}>{portal.label}</span>
+          <ChevronRight size={16} className={portal.color} />
+        </button>
+      )}
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
         {menuItems.map((item, i) => (

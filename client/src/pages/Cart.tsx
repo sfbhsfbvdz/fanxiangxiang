@@ -45,7 +45,7 @@ export const Cart = () => {
         <h2 className="text-xl font-bold text-gray-900 mb-2">购物车是空的</h2>
         <p className="text-gray-500 text-center mb-8">看起来你还没有添加任何商品。</p>
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/home')}
           className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-emerald-700 transition-colors"
         >
           去逛逛

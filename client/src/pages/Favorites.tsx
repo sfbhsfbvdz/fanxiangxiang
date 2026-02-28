@@ -65,7 +65,7 @@ export const Favorites = () => {
               浏览餐厅时点击心形图标即可收藏
             </p>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/home')}
               className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-emerald-700 transition-colors"
             >
               去逛逛
@@ -121,7 +121,7 @@ export const Favorites = () => {
             ))}
 
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/home')}
               className="w-full py-3.5 rounded-2xl border-2 border-dashed border-gray-200 text-gray-500 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50/30 transition-colors text-sm font-medium"
             >
               发现更多餐厅

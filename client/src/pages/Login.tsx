@@ -1,26 +1,35 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { ApiError } from '../api/client';
 
+const ROLE_HOME: Record<string, string> = {
+  merchant: '/merchant', rider: '/rider', admin: '/admin', customer: '/home',
+};
+
 export const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, user, isLoading } = useAuth();
+
+  // 已登录直接跳转，不显示登录页
+  if (!isLoading && user) {
+    return <Navigate to={ROLE_HOME[user.role ?? 'customer'] ?? '/'} replace />;
+  }
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setIsLoading(true);
+    setSubmitting(true);
     try {
-      await login(email, password);
-      navigate(-1);
+      const loggedInUser = await login(email, password);
+      navigate(ROLE_HOME[loggedInUser.role ?? 'customer'] ?? '/home');
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -28,7 +37,7 @@ export const Login = () => {
         setError('登录失败，请稍后重试');
       }
     } finally {
-      setIsLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -91,10 +100,10 @@ export const Login = () => {
 
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={submitting}
           className="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-semibold text-base mt-2 hover:bg-emerald-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {isLoading ? '登录中...' : '登录'}
+          {submitting ? '登录中...' : '登录'}
         </button>
 
         <p className="text-center text-sm text-gray-500">

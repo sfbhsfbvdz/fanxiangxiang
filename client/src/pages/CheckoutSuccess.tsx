@@ -64,7 +64,7 @@ export const CheckoutSuccess = () => {
           查看订单
         </button>
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/home')}
           className="bg-white text-emerald-600 px-6 py-2.5 rounded-xl font-semibold hover:bg-emerald-50 transition-colors"
         >
           继续点餐

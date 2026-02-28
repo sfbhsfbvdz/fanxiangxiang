@@ -25,8 +25,9 @@ export const Register = () => {
     }
     setIsLoading(true);
     try {
-      await register(username, email, password, phone || undefined);
-      navigate('/');
+      const user = await register(username, email, password, phone || undefined);
+      const roleHome: Record<string, string> = { merchant: '/merchant', rider: '/rider', admin: '/admin' };
+      navigate(roleHome[user.role ?? ''] ?? '/home');
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);

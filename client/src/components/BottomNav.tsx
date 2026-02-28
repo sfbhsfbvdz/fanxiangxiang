@@ -9,7 +9,7 @@ export const BottomNav = () => {
   const { totalItems } = useCart();
 
   const navItems = [
-    { icon: Home, label: '首页', path: '/' },
+    { icon: Home, label: '首页', path: '/home' },
     { icon: ShoppingBag, label: '订单', path: '/orders', badge: totalItems > 0 ? totalItems : undefined },
     { icon: User, label: '我的', path: '/profile' },
   ];
