@@ -14,6 +14,10 @@ import { BottomNav } from './components/BottomNav';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { PlaceholderPage } from './pages/PlaceholderPage';
+import { Settings } from './pages/Settings';
+import { Payment } from './pages/Payment';
+import { Favorites } from './pages/Favorites';
+import { Notifications } from './pages/Notifications';
 
 const Layout = () => (
   <>
@@ -41,8 +45,11 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/profile/address" element={<AddressManage />} />
+            <Route path="/profile/settings" element={<Settings />} />
+            <Route path="/profile/payment" element={<Payment />} />
+            <Route path="/profile/favorites" element={<Favorites />} />
             <Route path="/profile/:page" element={<PlaceholderPage />} />
-            <Route path="/notifications" element={<PlaceholderPage />} />
+            <Route path="/notifications" element={<Notifications />} />
           </Routes>
         </BrowserRouter>
       </CartProvider>
