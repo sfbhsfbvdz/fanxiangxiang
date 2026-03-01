@@ -1,4 +1,4 @@
-import { db } from '../config/database.js';
+import { queryOne, queryAll, execute } from '../config/database.js';
 import { NotFoundError, ForbiddenError, ConflictError } from '../middleware/error.js';
 import { User, Address, CreateAddressBody, UpdateAddressBody, UpdateProfileBody } from '../types/index.js';
 
@@ -25,11 +25,12 @@ interface AddressRow {
 
 export class UserService {
   // Get user profile
-  getProfile(userId: number): User {
-    const user = db.prepare(
+  async getProfile(userId: number): Promise<User> {
+    const user = await queryOne<UserRow>(
       `SELECT id, username, email, phone, avatar, created_at, updated_at
-       FROM users WHERE id = ?`
-    ).get(userId) as UserRow | undefined;
+       FROM users WHERE id = ?`,
+      [userId]
+    );
 
     if (!user) {
       throw new NotFoundError('用户不存在');
@@ -39,14 +40,15 @@ export class UserService {
   }
 
   // Update user profile
-  updateProfile(userId: number, data: UpdateProfileBody): User {
+  async updateProfile(userId: number, data: UpdateProfileBody): Promise<User> {
     const { username, phone, avatar } = data;
 
     // Check if username is taken by another user
     if (username) {
-      const existing = db.prepare(
-        'SELECT id FROM users WHERE username = ? AND id != ?'
-      ).get(username, userId);
+      const existing = await queryOne<{ id: number }>(
+        'SELECT id FROM users WHERE username = ? AND id != ?',
+        [username, userId]
+      );
 
       if (existing) {
         throw new ConflictError('用户名已被使用');
@@ -55,7 +57,7 @@ export class UserService {
 
     // Build update query dynamically
     const updates: string[] = [];
-    const values: (string | number)[] = [];
+    const values: unknown[] = [];
 
     if (username !== undefined) {
       updates.push('username = ?');
@@ -74,31 +76,34 @@ export class UserService {
       updates.push('updated_at = CURRENT_TIMESTAMP');
       values.push(userId);
 
-      db.prepare(
-        `UPDATE users SET ${updates.join(', ')} WHERE id = ?`
-      ).run(...values);
+      await execute(
+        `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
+        values
+      );
     }
 
     return this.getProfile(userId);
   }
 
   // Get user addresses
-  getAddresses(userId: number): Address[] {
-    const addresses = db.prepare(
+  async getAddresses(userId: number): Promise<Address[]> {
+    const addresses = await queryAll<AddressRow>(
       `SELECT id, user_id, name, phone, address, detail, is_default, created_at
        FROM addresses WHERE user_id = ?
-       ORDER BY is_default DESC, created_at DESC`
-    ).all(userId) as AddressRow[];
+       ORDER BY is_default DESC, created_at DESC`,
+      [userId]
+    );
 
     return addresses.map(this.mapAddress);
   }
 
   // Get single address
-  getAddress(addressId: number, userId: number): Address {
-    const address = db.prepare(
+  async getAddress(addressId: number, userId: number): Promise<Address> {
+    const address = await queryOne<AddressRow>(
       `SELECT id, user_id, name, phone, address, detail, is_default, created_at
-       FROM addresses WHERE id = ?`
-    ).get(addressId) as AddressRow | undefined;
+       FROM addresses WHERE id = ?`,
+      [addressId]
+    );
 
     if (!address) {
       throw new NotFoundError('地址不存在');
@@ -112,37 +117,41 @@ export class UserService {
   }
 
   // Create address
-  createAddress(userId: number, data: CreateAddressBody): Address {
+  async createAddress(userId: number, data: CreateAddressBody): Promise<Address> {
     const { name, phone, address, detail, isDefault } = data;
 
     // If this is set as default, unset other defaults
     if (isDefault) {
-      db.prepare(
-        'UPDATE addresses SET is_default = 0 WHERE user_id = ?'
-      ).run(userId);
+      await execute(
+        'UPDATE addresses SET is_default = 0 WHERE user_id = ?',
+        [userId]
+      );
     }
 
     // If this is the first address, make it default
-    const addressCount = db.prepare(
-      'SELECT COUNT(*) as count FROM addresses WHERE user_id = ?'
-    ).get(userId) as { count: number };
+    const countRow = await queryOne<{ count: number }>(
+      'SELECT COUNT(*) as count FROM addresses WHERE user_id = ?',
+      [userId]
+    );
 
-    const shouldBeDefault = isDefault || addressCount.count === 0;
+    const shouldBeDefault = isDefault || (countRow?.count ?? 0) === 0;
 
-    const result = db.prepare(
+    const result = await execute(
       `INSERT INTO addresses (user_id, name, phone, address, detail, is_default)
-       VALUES (?, ?, ?, ?, ?, ?)`
-    ).run(userId, name, phone, address, detail || null, shouldBeDefault ? 1 : 0);
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [userId, name, phone, address, detail || null, shouldBeDefault ? 1 : 0]
+    );
 
-    return this.getAddress(result.lastInsertRowid as number, userId);
+    return this.getAddress(result.insertId, userId);
   }
 
   // Update address
-  updateAddress(addressId: number, userId: number, data: UpdateAddressBody): Address {
+  async updateAddress(addressId: number, userId: number, data: UpdateAddressBody): Promise<Address> {
     // Verify ownership
-    const existing = db.prepare(
-      'SELECT user_id FROM addresses WHERE id = ?'
-    ).get(addressId) as { user_id: number } | undefined;
+    const existing = await queryOne<{ user_id: number }>(
+      'SELECT user_id FROM addresses WHERE id = ?',
+      [addressId]
+    );
 
     if (!existing) {
       throw new NotFoundError('地址不存在');
@@ -156,14 +165,15 @@ export class UserService {
 
     // If setting as default, unset other defaults
     if (isDefault) {
-      db.prepare(
-        'UPDATE addresses SET is_default = 0 WHERE user_id = ?'
-      ).run(userId);
+      await execute(
+        'UPDATE addresses SET is_default = 0 WHERE user_id = ?',
+        [userId]
+      );
     }
 
     // Build update query dynamically
     const updates: string[] = [];
-    const values: (string | number)[] = [];
+    const values: unknown[] = [];
 
     if (name !== undefined) {
       updates.push('name = ?');
@@ -188,19 +198,21 @@ export class UserService {
 
     if (updates.length > 0) {
       values.push(addressId);
-      db.prepare(
-        `UPDATE addresses SET ${updates.join(', ')} WHERE id = ?`
-      ).run(...values);
+      await execute(
+        `UPDATE addresses SET ${updates.join(', ')} WHERE id = ?`,
+        values
+      );
     }
 
     return this.getAddress(addressId, userId);
   }
 
   // Delete address
-  deleteAddress(addressId: number, userId: number): void {
-    const address = db.prepare(
-      'SELECT id, user_id, is_default FROM addresses WHERE id = ?'
-    ).get(addressId) as { id: number; user_id: number; is_default: number } | undefined;
+  async deleteAddress(addressId: number, userId: number): Promise<void> {
+    const address = await queryOne<{ id: number; user_id: number; is_default: number }>(
+      'SELECT id, user_id, is_default FROM addresses WHERE id = ?',
+      [addressId]
+    );
 
     if (!address) {
       throw new NotFoundError('地址不存在');
@@ -210,16 +222,17 @@ export class UserService {
       throw new ForbiddenError('无权删除此地址');
     }
 
-    db.prepare('DELETE FROM addresses WHERE id = ?').run(addressId);
+    await execute('DELETE FROM addresses WHERE id = ?', [addressId]);
 
     // If deleted address was default, set another as default
     if (address.is_default) {
-      const firstAddress = db.prepare(
-        `SELECT id FROM addresses WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`
-      ).get(userId) as { id: number } | undefined;
+      const firstAddress = await queryOne<{ id: number }>(
+        `SELECT id FROM addresses WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`,
+        [userId]
+      );
 
       if (firstAddress) {
-        db.prepare('UPDATE addresses SET is_default = 1 WHERE id = ?').run(firstAddress.id);
+        await execute('UPDATE addresses SET is_default = 1 WHERE id = ?', [firstAddress.id]);
       }
     }
   }

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { db } from '../config/database.js';
+import { queryOne, queryAll, execute } from '../config/database.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
 import { asyncHandler, NotFoundError, BadRequestError } from '../middleware/error.js';
 
@@ -10,26 +10,26 @@ router.use(authenticate, requireRole('rider'));
 
 // GET /api/rider/orders/available — 获取可接单列表 (delivering状态、未分配骑手)
 router.get('/orders/available', asyncHandler(async (_req: Request, res: Response) => {
-  const orders = db.prepare(`
+  const orders = await queryAll<any>(`
     SELECT o.*, r.name as restaurant_name, r.image as restaurant_image
     FROM orders o
     JOIN restaurants r ON o.restaurant_id = r.id
     WHERE o.status = 'delivering' AND o.rider_id IS NULL
     ORDER BY o.updated_at DESC
-  `).all();
+  `);
 
   res.json({ success: true, data: orders });
 }));
 
 // GET /api/rider/orders/mine — 我的配送（当前+历史）
 router.get('/orders/mine', asyncHandler(async (req: Request, res: Response) => {
-  const orders = db.prepare(`
+  const orders = await queryAll<any>(`
     SELECT o.*, r.name as restaurant_name, r.image as restaurant_image
     FROM orders o
     JOIN restaurants r ON o.restaurant_id = r.id
     WHERE o.rider_id = ?
     ORDER BY o.updated_at DESC
-  `).all(req.user!.userId);
+  `, [req.user!.userId]);
 
   res.json({ success: true, data: orders });
 }));
@@ -39,14 +39,15 @@ router.put('/orders/:id/accept', asyncHandler(async (req: Request, res: Response
   const orderId = parseInt(req.params.id as string);
   const riderId = req.user!.userId;
 
-  const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as any;
+  const order = await queryOne<any>('SELECT * FROM orders WHERE id = ?', [orderId]);
   if (!order) throw new NotFoundError('订单不存在');
   if (order.status !== 'delivering') throw new BadRequestError('该订单无法接单');
   if (order.rider_id !== null) throw new BadRequestError('该订单已被其他骑手接单');
 
-  db.prepare(
-    `UPDATE orders SET rider_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
-  ).run(riderId, orderId);
+  await execute(
+    `UPDATE orders SET rider_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+    [riderId, orderId]
+  );
 
   res.json({ success: true, message: '抢单成功' });
 }));
@@ -56,9 +57,10 @@ router.put('/orders/:id/picked', asyncHandler(async (req: Request, res: Response
   const orderId = parseInt(req.params.id as string);
   const riderId = req.user!.userId;
 
-  const order = db.prepare(
-    'SELECT * FROM orders WHERE id = ? AND rider_id = ?'
-  ).get(orderId, riderId) as any;
+  const order = await queryOne<any>(
+    'SELECT * FROM orders WHERE id = ? AND rider_id = ?',
+    [orderId, riderId]
+  );
   if (!order) throw new NotFoundError('订单不存在');
   if (order.status !== 'delivering') throw new BadRequestError('订单状态不正确');
 
@@ -71,24 +73,27 @@ router.put('/orders/:id/delivered', asyncHandler(async (req: Request, res: Respo
   const orderId = parseInt(req.params.id as string);
   const riderId = req.user!.userId;
 
-  const order = db.prepare(
-    'SELECT * FROM orders WHERE id = ? AND rider_id = ?'
-  ).get(orderId, riderId) as any;
+  const order = await queryOne<any>(
+    'SELECT * FROM orders WHERE id = ? AND rider_id = ?',
+    [orderId, riderId]
+  );
   if (!order) throw new NotFoundError('订单不存在');
   if (order.status !== 'delivering') throw new BadRequestError('订单状态不正确');
 
-  db.prepare(
-    `UPDATE orders SET status = 'completed', updated_at = CURRENT_TIMESTAMP WHERE id = ?`
-  ).run(orderId);
+  await execute(
+    `UPDATE orders SET status = 'completed', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+    [orderId]
+  );
 
   res.json({ success: true, message: '配送完成' });
 }));
 
 // GET /api/rider/status — 获取骑手状态
 router.get('/status', asyncHandler(async (req: Request, res: Response) => {
-  const rider = db.prepare(
-    'SELECT * FROM riders WHERE user_id = ?'
-  ).get(req.user!.userId) as any;
+  const rider = await queryOne<any>(
+    'SELECT * FROM riders WHERE user_id = ?',
+    [req.user!.userId]
+  );
 
   res.json({ success: true, data: rider || { status: 'offline', vehicle_type: 'bike' } });
 }));
@@ -102,11 +107,11 @@ router.put('/status', asyncHandler(async (req: Request, res: Response) => {
     throw new BadRequestError('状态值不合法');
   }
 
-  const existing = db.prepare('SELECT id FROM riders WHERE user_id = ?').get(userId);
+  const existing = await queryOne<{ id: number }>('SELECT id FROM riders WHERE user_id = ?', [userId]);
   if (existing) {
-    db.prepare('UPDATE riders SET status = ? WHERE user_id = ?').run(status, userId);
+    await execute('UPDATE riders SET status = ? WHERE user_id = ?', [status, userId]);
   } else {
-    db.prepare('INSERT INTO riders (user_id, status) VALUES (?, ?)').run(userId, status);
+    await execute('INSERT INTO riders (user_id, status) VALUES (?, ?)', [userId, status]);
   }
 
   res.json({ success: true, message: '状态已更新' });

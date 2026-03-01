@@ -1,0 +1,43 @@
+name: 自动部署到阿里云 ECS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: SSH 部署到服务器
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/fanfou
+
+            echo "=== 拉取最新代码 ==="
+            git pull
+
+            echo "=== 安装依赖 ==="
+            npm install --registry=https://registry.npmmirror.com
+
+            echo "=== 构建前端 ==="
+            npm run build --workspace=client
+            cp -r client/dist/. /var/www/fanfou/
+
+            echo "=== 重启后端 ==="
+            cd server
+            npm install --registry=https://registry.npmmirror.com
+            pm2 restart fanfou-server || pm2 start ecosystem.config.cjs
+            pm2 save
+
+            echo "✅ 部署完成"
+            pm2 status

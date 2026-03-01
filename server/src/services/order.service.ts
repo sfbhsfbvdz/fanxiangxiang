@@ -1,4 +1,5 @@
-import { db } from '../config/database.js';
+import mysql from 'mysql2/promise';
+import { queryOne, queryAll, execute, getConnection } from '../config/database.js';
 import { NotFoundError, BadRequestError, ForbiddenError } from '../middleware/error.js';
 import { Order, OrderItem, OrderWithDetails, OrderStatus, CreateOrderBody, PaginatedResponse } from '../types/index.js';
 import { restaurantService } from './restaurant.service.js';
@@ -36,17 +37,18 @@ interface AddressRow {
 
 export class OrderService {
   // Create a new order
-  createOrder(userId: number, data: CreateOrderBody): OrderWithDetails {
+  async createOrder(userId: number, data: CreateOrderBody): Promise<OrderWithDetails> {
     const { restaurantId, items, deliveryAddressId, notes } = data;
 
     // Verify restaurant exists
-    const restaurant = restaurantService.getRestaurantById(restaurantId);
+    const restaurant = await restaurantService.getRestaurantById(restaurantId);
 
     // Verify address belongs to user
-    const address = db.prepare(
+    const address = await queryOne<AddressRow>(
       `SELECT id, user_id, name, phone, address, detail
-       FROM addresses WHERE id = ? AND user_id = ?`
-    ).get(deliveryAddressId, userId) as AddressRow | undefined;
+       FROM addresses WHERE id = ? AND user_id = ?`,
+      [deliveryAddressId, userId]
+    );
 
     if (!address) {
       throw new BadRequestError('配送地址不存在');
@@ -57,7 +59,7 @@ export class OrderService {
     const orderItems: { menuItemId: number; name: string; quantity: number; price: number }[] = [];
 
     for (const item of items) {
-      const menuItem = restaurantService.getMenuItem(item.menuItemId);
+      const menuItem = await restaurantService.getMenuItem(item.menuItemId);
 
       if (menuItem.restaurantId !== restaurantId) {
         throw new BadRequestError(`菜品 ${menuItem.name} 不属于该餐厅`);
@@ -91,45 +93,50 @@ export class OrderService {
       ? `${address.address} ${address.detail} (${address.name} ${address.phone})`
       : `${address.address} (${address.name} ${address.phone})`;
 
-    // Create order in transaction
-    const transaction = db.transaction(() => {
-      // Insert order
-      const orderResult = db.prepare(
+    // Create order in a transaction
+    const conn = await getConnection();
+    let orderId: number;
+    try {
+      await conn.beginTransaction();
+
+      const [orderResult] = await conn.execute<mysql.ResultSetHeader>(
         `INSERT INTO orders (user_id, restaurant_id, status, total_price, delivery_fee, delivery_address, notes)
-         VALUES (?, ?, 'pending', ?, ?, ?, ?)`
-      ).run(userId, restaurantId, totalPrice, deliveryFee, deliveryAddress, notes || null);
-
-      const orderId = orderResult.lastInsertRowid as number;
-
-      // Insert order items
-      const insertItem = db.prepare(
-        `INSERT INTO order_items (order_id, menu_item_id, name, quantity, price)
-         VALUES (?, ?, ?, ?, ?)`
+         VALUES (?, ?, 'pending', ?, ?, ?, ?)`,
+        [userId, restaurantId, totalPrice, deliveryFee, deliveryAddress, notes || null]
       );
 
+      orderId = orderResult.insertId;
+
       for (const item of orderItems) {
-        insertItem.run(orderId, item.menuItemId, item.name, item.quantity, item.price);
+        await conn.execute(
+          `INSERT INTO order_items (order_id, menu_item_id, name, quantity, price)
+           VALUES (?, ?, ?, ?, ?)`,
+          [orderId, item.menuItemId, item.name, item.quantity, item.price]
+        );
       }
 
-      return orderId;
-    });
-
-    const orderId = transaction();
+      await conn.commit();
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
 
     return this.getOrderById(orderId, userId);
   }
 
   // Get user's orders
-  getUserOrders(
+  async getUserOrders(
     userId: number,
     status?: OrderStatus,
     page: number = 1,
     limit: number = 20
-  ): PaginatedResponse<OrderWithDetails> {
+  ): Promise<PaginatedResponse<OrderWithDetails>> {
     const offset = (page - 1) * limit;
 
     let whereClause = 'WHERE o.user_id = ?';
-    const params: (string | number)[] = [userId];
+    const params: unknown[] = [userId];
 
     if (status) {
       whereClause += ' AND o.status = ?';
@@ -137,12 +144,13 @@ export class OrderService {
     }
 
     // Get total count
-    const countResult = db.prepare(
-      `SELECT COUNT(*) as count FROM orders o ${whereClause}`
-    ).get(...params) as { count: number };
+    const countResult = await queryOne<{ count: number }>(
+      `SELECT COUNT(*) as count FROM orders o ${whereClause}`,
+      params
+    );
 
     // Get orders with restaurant info
-    const orders = db.prepare(
+    const orders = await queryAll<OrderRow & { restaurant_name: string; restaurant_image: string | null }>(
       `SELECT o.id, o.user_id, o.restaurant_id, o.status, o.total_price, o.delivery_fee,
               o.delivery_address, o.notes, o.created_at, o.updated_at,
               r.name as restaurant_name, r.image as restaurant_image
@@ -150,33 +158,39 @@ export class OrderService {
        JOIN restaurants r ON o.restaurant_id = r.id
        ${whereClause}
        ORDER BY o.created_at DESC
-       LIMIT ? OFFSET ?`
-    ).all(...params, limit, offset) as (OrderRow & { restaurant_name: string; restaurant_image: string | null })[];
+       LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
+    );
 
     // Get items for all orders
-    const ordersWithDetails = orders.map(order => {
-      const items = this.getOrderItems(order.id);
-      return this.mapOrderWithDetails(order, items);
-    });
+    const ordersWithDetails = await Promise.all(
+      orders.map(async order => {
+        const items = await this.getOrderItems(order.id);
+        return this.mapOrderWithDetails(order, items);
+      })
+    );
+
+    const total = countResult?.count ?? 0;
 
     return {
       items: ordersWithDetails,
-      total: countResult.count,
+      total,
       page,
-      totalPages: Math.ceil(countResult.count / limit),
+      totalPages: Math.ceil(total / limit),
     };
   }
 
   // Get single order by ID
-  getOrderById(orderId: number, userId: number): OrderWithDetails {
-    const order = db.prepare(
+  async getOrderById(orderId: number, userId: number): Promise<OrderWithDetails> {
+    const order = await queryOne<OrderRow & { restaurant_name: string; restaurant_image: string | null }>(
       `SELECT o.id, o.user_id, o.restaurant_id, o.status, o.total_price, o.delivery_fee,
               o.delivery_address, o.notes, o.created_at, o.updated_at,
               r.name as restaurant_name, r.image as restaurant_image
        FROM orders o
        JOIN restaurants r ON o.restaurant_id = r.id
-       WHERE o.id = ?`
-    ).get(orderId) as (OrderRow & { restaurant_name: string; restaurant_image: string | null }) | undefined;
+       WHERE o.id = ?`,
+      [orderId]
+    );
 
     if (!order) {
       throw new NotFoundError('订单不存在');
@@ -186,15 +200,16 @@ export class OrderService {
       throw new ForbiddenError('无权访问此订单');
     }
 
-    const items = this.getOrderItems(orderId);
+    const items = await this.getOrderItems(orderId);
     return this.mapOrderWithDetails(order, items);
   }
 
   // Cancel order
-  cancelOrder(orderId: number, userId: number): void {
-    const order = db.prepare(
-      'SELECT id, user_id, status FROM orders WHERE id = ?'
-    ).get(orderId) as { id: number; user_id: number; status: string } | undefined;
+  async cancelOrder(orderId: number, userId: number): Promise<void> {
+    const order = await queryOne<{ id: number; user_id: number; status: string }>(
+      'SELECT id, user_id, status FROM orders WHERE id = ?',
+      [orderId]
+    );
 
     if (!order) {
       throw new NotFoundError('订单不存在');
@@ -208,30 +223,31 @@ export class OrderService {
       throw new BadRequestError('当前订单状态不允许取消');
     }
 
-    db.prepare(
-      `UPDATE orders SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?`
-    ).run(orderId);
+    await execute(
+      `UPDATE orders SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [orderId]
+    );
   }
 
   // Update order status (for admin/internal use)
-  updateOrderStatus(orderId: number, status: OrderStatus): void {
-    const result = db.prepare(
-      `UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?`
-    ).run(status, orderId);
+  async updateOrderStatus(orderId: number, status: OrderStatus): Promise<void> {
+    const result = await execute(
+      `UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [status, orderId]
+    );
 
-    if (result.changes === 0) {
+    if (result.affectedRows === 0) {
       throw new NotFoundError('订单不存在');
     }
   }
 
   // Helper methods
-  private getOrderItems(orderId: number): OrderItemRow[] {
-    return db.prepare(
+  private async getOrderItems(orderId: number): Promise<OrderItemRow[]> {
+    return queryAll<OrderItemRow>(
       `SELECT id, order_id, menu_item_id, name, quantity, price
-       FROM order_items WHERE order_id = ?`
-    ).all(orderId) as OrderItemRow[];
+       FROM order_items WHERE order_id = ?`,
+      [orderId]
+    );
   }
 
   private mapOrderWithDetails(
@@ -243,8 +259,8 @@ export class OrderService {
       userId: row.user_id,
       restaurantId: row.restaurant_id,
       status: row.status as OrderStatus,
-      totalPrice: row.total_price,
-      deliveryFee: row.delivery_fee,
+      totalPrice: parseFloat(String(row.total_price)),
+      deliveryFee: parseFloat(String(row.delivery_fee)),
       deliveryAddress: row.delivery_address,
       notes: row.notes || undefined,
       createdAt: row.created_at,
@@ -260,7 +276,7 @@ export class OrderService {
         menuItemId: item.menu_item_id,
         name: item.name,
         quantity: item.quantity,
-        price: item.price,
+        price: parseFloat(String(item.price)),
       })),
     };
   }

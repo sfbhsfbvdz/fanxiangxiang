@@ -1,9 +1,9 @@
--- 饭否数据库表结构
--- SQLite Schema
+-- 饭饭香数据库表结构
+-- MySQL Schema
 
 -- 用户表
 CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
@@ -12,14 +12,14 @@ CREATE TABLE IF NOT EXISTS users (
     role VARCHAR(20) DEFAULT 'customer',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX idx_users_username ON users(username);
+CREATE INDEX idx_users_email ON users(email);
 
 -- 餐厅表
 CREATE TABLE IF NOT EXISTS restaurants (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT,
     image VARCHAR(255),
@@ -29,34 +29,34 @@ CREATE TABLE IF NOT EXISTS restaurants (
     min_order DECIMAL(10,2) DEFAULT 0.00,
     status VARCHAR(20) DEFAULT 'active',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 餐厅标签表（多对多关系）
 CREATE TABLE IF NOT EXISTS restaurant_tags (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    restaurant_id INTEGER NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    restaurant_id INT NOT NULL,
     tag VARCHAR(50) NOT NULL,
     FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE INDEX IF NOT EXISTS idx_restaurant_tags_restaurant_id ON restaurant_tags(restaurant_id);
+CREATE INDEX idx_restaurant_tags_restaurant_id ON restaurant_tags(restaurant_id);
 
 -- 分类表
 CREATE TABLE IF NOT EXISTS categories (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    restaurant_id INTEGER NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    restaurant_id INT NOT NULL,
     name VARCHAR(50) NOT NULL,
-    sort_order INTEGER DEFAULT 0,
+    sort_order INT DEFAULT 0,
     FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE INDEX IF NOT EXISTS idx_categories_restaurant_id ON categories(restaurant_id);
+CREATE INDEX idx_categories_restaurant_id ON categories(restaurant_id);
 
 -- 菜品表
 CREATE TABLE IF NOT EXISTS menu_items (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    restaurant_id INTEGER NOT NULL,
-    category_id INTEGER NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    restaurant_id INT NOT NULL,
+    category_id INT NOT NULL,
     name VARCHAR(100) NOT NULL,
     description TEXT,
     price DECIMAL(10,2) NOT NULL,
@@ -65,17 +65,17 @@ CREATE TABLE IF NOT EXISTS menu_items (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE,
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE INDEX IF NOT EXISTS idx_menu_items_restaurant_id ON menu_items(restaurant_id);
-CREATE INDEX IF NOT EXISTS idx_menu_items_category_id ON menu_items(category_id);
+CREATE INDEX idx_menu_items_restaurant_id ON menu_items(restaurant_id);
+CREATE INDEX idx_menu_items_category_id ON menu_items(category_id);
 
 -- 订单表
 CREATE TABLE IF NOT EXISTS orders (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    restaurant_id INTEGER NOT NULL,
-    rider_id INTEGER REFERENCES users(id),
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    restaurant_id INT NOT NULL,
+    rider_id INT,
     status VARCHAR(20) DEFAULT 'pending',
     total_price DECIMAL(10,2) NOT NULL,
     delivery_fee DECIMAL(10,2) DEFAULT 0.00,
@@ -85,53 +85,56 @@ CREATE TABLE IF NOT EXISTS orders (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
-CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
-CREATE INDEX IF NOT EXISTS idx_orders_restaurant_id ON orders(restaurant_id);
+CREATE INDEX idx_orders_user_id ON orders(user_id);
+CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX idx_orders_restaurant_id ON orders(restaurant_id);
 
 -- 订单明细表
 CREATE TABLE IF NOT EXISTS order_items (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    order_id INTEGER NOT NULL,
-    menu_item_id INTEGER NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    menu_item_id INT NOT NULL,
     name VARCHAR(100) NOT NULL,
-    quantity INTEGER NOT NULL,
+    quantity INT NOT NULL,
     price DECIMAL(10,2) NOT NULL,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     FOREIGN KEY (menu_item_id) REFERENCES menu_items(id) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
+CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 
 -- 地址表
 CREATE TABLE IF NOT EXISTS addresses (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
     name VARCHAR(50) NOT NULL,
     phone VARCHAR(20) NOT NULL,
     address VARCHAR(255) NOT NULL,
     detail VARCHAR(255),
-    is_default INTEGER DEFAULT 0,
+    is_default TINYINT(1) DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE INDEX IF NOT EXISTS idx_addresses_user_id ON addresses(user_id);
+CREATE INDEX idx_addresses_user_id ON addresses(user_id);
 
 -- 骑手表
 CREATE TABLE IF NOT EXISTS riders (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER UNIQUE NOT NULL REFERENCES users(id),
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNIQUE NOT NULL,
     status VARCHAR(20) DEFAULT 'offline',
     vehicle_type VARCHAR(20) DEFAULT 'bike',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 餐厅管理员表（商家与餐厅绑定）
 CREATE TABLE IF NOT EXISTS restaurant_managers (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER UNIQUE NOT NULL REFERENCES users(id),
-    restaurant_id INTEGER NOT NULL REFERENCES restaurants(id)
-);
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNIQUE NOT NULL,
+    restaurant_id INT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (restaurant_id) REFERENCES restaurants(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -19,9 +19,6 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Initialize database
-initDatabase();
-
 // API Routes
 app.use('/api', routes);
 
@@ -33,10 +30,17 @@ app.get('/health', (_req, res) => {
 // Error handling
 app.use(errorHandler);
 
-// Start server
-app.listen(env.PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${env.PORT}`);
-  console.log(`📝 Environment: ${env.NODE_ENV}`);
-});
+// Initialize database then start server
+initDatabase()
+  .then(() => {
+    app.listen(env.PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${env.PORT}`);
+      console.log(`📝 Environment: ${env.NODE_ENV}`);
+    });
+  })
+  .catch(err => {
+    console.error('❌ Failed to initialize database:', err);
+    process.exit(1);
+  });
 
 export default app;

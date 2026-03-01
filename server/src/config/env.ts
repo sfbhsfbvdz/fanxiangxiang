@@ -16,8 +16,12 @@ export const env = {
   JWT_SECRET: process.env.JWT_SECRET || 'fanfou-dev-secret-key',
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
 
-  // Database
-  DATABASE_PATH: process.env.DATABASE_PATH || './database/fanfou.db',
+  // Database (MySQL)
+  DB_HOST: process.env.DB_HOST || 'localhost',
+  DB_PORT: parseInt(process.env.DB_PORT || '3306', 10),
+  DB_USER: process.env.DB_USER || 'fanfou',
+  DB_PASSWORD: process.env.DB_PASSWORD || '',
+  DB_NAME: process.env.DB_NAME || 'fanfou',
 
   // CORS
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:3000',

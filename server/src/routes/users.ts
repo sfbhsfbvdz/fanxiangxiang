@@ -15,7 +15,7 @@ router.get(
   '/profile',
   asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const user = userService.getProfile(userId);
+    const user = await userService.getProfile(userId);
 
     res.json({
       success: true,
@@ -46,7 +46,7 @@ router.put(
   ]),
   asyncHandler(async (req: Request<{}, {}, UpdateProfileBody>, res: Response) => {
     const userId = req.user!.userId;
-    const user = userService.updateProfile(userId, req.body);
+    const user = await userService.updateProfile(userId, req.body);
 
     res.json({
       success: true,
@@ -61,7 +61,7 @@ router.get(
   '/addresses',
   asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const addresses = userService.getAddresses(userId);
+    const addresses = await userService.getAddresses(userId);
 
     res.json({
       success: true,
@@ -76,7 +76,7 @@ router.post(
   validate(addressValidation.create),
   asyncHandler(async (req: Request<{}, {}, CreateAddressBody>, res: Response) => {
     const userId = req.user!.userId;
-    const address = userService.createAddress(userId, req.body);
+    const address = await userService.createAddress(userId, req.body);
 
     res.status(201).json({
       success: true,
@@ -92,9 +92,9 @@ router.get(
   validate([param('id').isInt({ min: 1 })]),
   asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const addressId = parseInt(req.params.id);
+    const addressId = parseInt(req.params.id as string);
 
-    const address = userService.getAddress(addressId, userId);
+    const address = await userService.getAddress(addressId, userId);
 
     res.json({
       success: true,
@@ -107,11 +107,11 @@ router.get(
 router.put(
   '/addresses/:id',
   validate(addressValidation.update),
-  asyncHandler(async (req: Request<{ id: string }, {}, UpdateAddressBody>, res: Response) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const addressId = parseInt(req.params.id);
+    const addressId = parseInt(req.params.id as string);
 
-    const address = userService.updateAddress(addressId, userId, req.body);
+    const address = await userService.updateAddress(addressId, userId, req.body);
 
     res.json({
       success: true,
@@ -127,9 +127,9 @@ router.delete(
   validate([param('id').isInt({ min: 1 })]),
   asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const addressId = parseInt(req.params.id);
+    const addressId = parseInt(req.params.id as string);
 
-    userService.deleteAddress(addressId, userId);
+    await userService.deleteAddress(addressId, userId);
 
     res.json({
       success: true,

@@ -1,4 +1,4 @@
-import { db } from '../config/database.js';
+import { queryOne, queryAll } from '../config/database.js';
 import { NotFoundError } from '../middleware/error.js';
 import { Restaurant, Category, MenuItem, MenuCategory, PaginatedResponse } from '../types/index.js';
 
@@ -34,15 +34,15 @@ interface MenuItemRow {
 
 export class RestaurantService {
   // Get restaurant list with optional search and pagination
-  getRestaurants(
+  async getRestaurants(
     search?: string,
     page: number = 1,
     limit: number = 20
-  ): PaginatedResponse<Restaurant> {
+  ): Promise<PaginatedResponse<Restaurant>> {
     const offset = (page - 1) * limit;
 
     let whereClause = "WHERE status = 'active'";
-    const params: (string | number)[] = [];
+    const params: unknown[] = [];
 
     if (search) {
       whereClause += ` AND (name LIKE ? OR description LIKE ?)`;
@@ -51,46 +51,54 @@ export class RestaurantService {
     }
 
     // Get total count
-    const countResult = db.prepare(
-      `SELECT COUNT(*) as count FROM restaurants ${whereClause}`
-    ).get(...params) as { count: number };
+    const countResult = await queryOne<{ count: number }>(
+      `SELECT COUNT(*) as count FROM restaurants ${whereClause}`,
+      params
+    );
 
     // Get restaurants
-    const restaurants = db.prepare(
+    const restaurants = await queryAll<RestaurantRow>(
       `SELECT id, name, description, image, rating, delivery_time, delivery_fee, min_order, status
        FROM restaurants ${whereClause}
        ORDER BY rating DESC
-       LIMIT ? OFFSET ?`
-    ).all(...params, limit, offset) as RestaurantRow[];
+       LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
+    );
 
     // Get tags for all restaurants
-    const restaurantIds = restaurants.map(r => r.id);
-    const restaurantsWithTags = restaurants.map(r => {
-      const tags = this.getRestaurantTags(r.id);
-      return this.mapRestaurant(r, tags);
-    });
+    const restaurantsWithTags = await Promise.all(
+      restaurants.map(async r => {
+        const tags = await this.getRestaurantTags(r.id);
+        return this.mapRestaurant(r, tags);
+      })
+    );
+
+    const total = countResult?.count ?? 0;
 
     return {
       items: restaurantsWithTags,
-      total: countResult.count,
+      total,
       page,
-      totalPages: Math.ceil(countResult.count / limit),
+      totalPages: Math.ceil(total / limit),
     };
   }
 
   // Get single restaurant by ID
-  getRestaurantById(id: number): Restaurant {
-    const restaurant = db.prepare(
+  async getRestaurantById(id: number): Promise<Restaurant> {
+    const restaurant = await queryOne<RestaurantRow>(
       `SELECT id, name, description, image, rating, delivery_time, delivery_fee, min_order, status
-       FROM restaurants WHERE id = ?`
-    ).get(id) as RestaurantRow | undefined;
+       FROM restaurants WHERE id = ?`,
+      [id]
+    );
 
     if (!restaurant) {
       throw new NotFoundError('餐厅不存在');
     }
 
-    const tags = this.getRestaurantTags(id);
-    const categories = this.getCategories(id);
+    const [tags, categories] = await Promise.all([
+      this.getRestaurantTags(id),
+      this.getCategories(id),
+    ]);
 
     return {
       ...this.mapRestaurant(restaurant, tags),
@@ -99,28 +107,31 @@ export class RestaurantService {
   }
 
   // Get restaurant menu
-  getRestaurantMenu(restaurantId: number): { categories: MenuCategory[] } {
+  async getRestaurantMenu(restaurantId: number): Promise<{ categories: MenuCategory[] }> {
     // Check if restaurant exists
-    const restaurant = db.prepare(
-      'SELECT id FROM restaurants WHERE id = ?'
-    ).get(restaurantId);
+    const restaurant = await queryOne<{ id: number }>(
+      'SELECT id FROM restaurants WHERE id = ?',
+      [restaurantId]
+    );
 
     if (!restaurant) {
       throw new NotFoundError('餐厅不存在');
     }
 
-    // Get categories
-    const categoryRows = db.prepare(
-      `SELECT id, restaurant_id, name, sort_order
-       FROM categories WHERE restaurant_id = ?
-       ORDER BY sort_order ASC`
-    ).all(restaurantId) as CategoryRow[];
-
-    // Get all menu items for this restaurant
-    const menuItems = db.prepare(
-      `SELECT id, restaurant_id, category_id, name, description, price, image, status
-       FROM menu_items WHERE restaurant_id = ?`
-    ).all(restaurantId) as MenuItemRow[];
+    // Get categories and menu items in parallel
+    const [categoryRows, menuItems] = await Promise.all([
+      queryAll<CategoryRow>(
+        `SELECT id, restaurant_id, name, sort_order
+         FROM categories WHERE restaurant_id = ?
+         ORDER BY sort_order ASC`,
+        [restaurantId]
+      ),
+      queryAll<MenuItemRow>(
+        `SELECT id, restaurant_id, category_id, name, description, price, image, status
+         FROM menu_items WHERE restaurant_id = ?`,
+        [restaurantId]
+      ),
+    ]);
 
     // Group items by category
     const categories: MenuCategory[] = categoryRows.map(cat => ({
@@ -137,11 +148,12 @@ export class RestaurantService {
   }
 
   // Get menu item by ID
-  getMenuItem(id: number): MenuItem {
-    const item = db.prepare(
+  async getMenuItem(id: number): Promise<MenuItem> {
+    const item = await queryOne<MenuItemRow>(
       `SELECT id, restaurant_id, category_id, name, description, price, image, status
-       FROM menu_items WHERE id = ?`
-    ).get(id) as MenuItemRow | undefined;
+       FROM menu_items WHERE id = ?`,
+      [id]
+    );
 
     if (!item) {
       throw new NotFoundError('菜品不存在');
@@ -151,20 +163,22 @@ export class RestaurantService {
   }
 
   // Helper methods
-  private getRestaurantTags(restaurantId: number): string[] {
-    const rows = db.prepare(
-      'SELECT tag FROM restaurant_tags WHERE restaurant_id = ?'
-    ).all(restaurantId) as { tag: string }[];
+  private async getRestaurantTags(restaurantId: number): Promise<string[]> {
+    const rows = await queryAll<{ tag: string }>(
+      'SELECT tag FROM restaurant_tags WHERE restaurant_id = ?',
+      [restaurantId]
+    );
 
     return rows.map(r => r.tag);
   }
 
-  private getCategories(restaurantId: number): Category[] {
-    const rows = db.prepare(
+  private async getCategories(restaurantId: number): Promise<Category[]> {
+    const rows = await queryAll<CategoryRow>(
       `SELECT id, restaurant_id, name, sort_order
        FROM categories WHERE restaurant_id = ?
-       ORDER BY sort_order ASC`
-    ).all(restaurantId) as CategoryRow[];
+       ORDER BY sort_order ASC`,
+      [restaurantId]
+    );
 
     return rows.map(r => ({
       id: r.id,
@@ -180,10 +194,10 @@ export class RestaurantService {
       name: row.name,
       description: row.description || undefined,
       image: row.image || undefined,
-      rating: row.rating,
+      rating: parseFloat(String(row.rating)),
       deliveryTime: row.delivery_time,
-      deliveryFee: row.delivery_fee,
-      minOrder: row.min_order,
+      deliveryFee: parseFloat(String(row.delivery_fee)),
+      minOrder: parseFloat(String(row.min_order)),
       status: row.status as 'active' | 'inactive',
       tags,
     };
@@ -196,7 +210,7 @@ export class RestaurantService {
       categoryId: row.category_id,
       name: row.name,
       description: row.description || undefined,
-      price: row.price,
+      price: parseFloat(String(row.price)),
       image: row.image || undefined,
       status: row.status as 'available' | 'sold_out',
     };

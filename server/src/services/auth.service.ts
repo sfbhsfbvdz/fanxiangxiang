@@ -1,8 +1,8 @@
 import bcrypt from 'bcrypt';
-import { db } from '../config/database.js';
+import { queryOne, execute } from '../config/database.js';
 import { generateToken, JwtPayload } from '../middleware/auth.js';
 import { ConflictError, UnauthorizedError } from '../middleware/error.js';
-import { User, UserWithPassword, RegisterBody, LoginBody } from '../types/index.js';
+import { User, RegisterBody, LoginBody } from '../types/index.js';
 
 const SALT_ROUNDS = 10;
 
@@ -12,9 +12,10 @@ export class AuthService {
     const { username, email, password, phone } = data;
 
     // Check if user already exists
-    const existingUser = db.prepare(
-      'SELECT id FROM users WHERE email = ? OR username = ?'
-    ).get(email, username) as { id: number } | undefined;
+    const existingUser = await queryOne<{ id: number }>(
+      'SELECT id FROM users WHERE email = ? OR username = ?',
+      [email, username]
+    );
 
     if (existingUser) {
       throw new ConflictError('用户名或邮箱已存在');
@@ -24,15 +25,15 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
     // Insert user
-    const result = db.prepare(
-      `INSERT INTO users (username, email, password_hash, phone)
-       VALUES (?, ?, ?, ?)`
-    ).run(username, email, passwordHash, phone || null);
+    const result = await execute(
+      `INSERT INTO users (username, email, password_hash, phone) VALUES (?, ?, ?, ?)`,
+      [username, email, passwordHash, phone || null]
+    );
 
-    const userId = result.lastInsertRowid as number;
+    const userId = result.insertId;
 
     // Get the created user
-    const user = this.getUserById(userId);
+    const user = await this.getUserById(userId);
 
     // Generate token
     const token = generateToken({
@@ -50,10 +51,7 @@ export class AuthService {
     const { email, password } = data;
 
     // Find user by email
-    const userWithPassword = db.prepare(
-      `SELECT id, username, email, password_hash, phone, avatar, role, created_at, updated_at
-       FROM users WHERE email = ?`
-    ).get(email) as {
+    const userWithPassword = await queryOne<{
       id: number;
       username: string;
       email: string;
@@ -63,7 +61,11 @@ export class AuthService {
       role: string;
       created_at: string;
       updated_at: string;
-    } | undefined;
+    }>(
+      `SELECT id, username, email, password_hash, phone, avatar, role, created_at, updated_at
+       FROM users WHERE email = ?`,
+      [email]
+    );
 
     if (!userWithPassword) {
       throw new UnauthorizedError('邮箱或密码错误');
@@ -99,11 +101,8 @@ export class AuthService {
   }
 
   // Get user by ID
-  getUserById(id: number): User {
-    const row = db.prepare(
-      `SELECT id, username, email, phone, avatar, role, created_at, updated_at
-       FROM users WHERE id = ?`
-    ).get(id) as {
+  async getUserById(id: number): Promise<User> {
+    const row = await queryOne<{
       id: number;
       username: string;
       email: string;
@@ -112,7 +111,15 @@ export class AuthService {
       role: string;
       created_at: string;
       updated_at: string;
-    };
+    }>(
+      `SELECT id, username, email, phone, avatar, role, created_at, updated_at
+       FROM users WHERE id = ?`,
+      [id]
+    );
+
+    if (!row) {
+      throw new Error('用户不存在');
+    }
 
     return {
       id: row.id,
@@ -127,7 +134,7 @@ export class AuthService {
   }
 
   // Get user profile from JWT payload
-  getProfile(payload: JwtPayload): User {
+  async getProfile(payload: JwtPayload): Promise<User> {
     return this.getUserById(payload.userId);
   }
 }

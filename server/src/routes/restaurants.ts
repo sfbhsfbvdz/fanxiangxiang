@@ -17,7 +17,7 @@ router.get(
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
 
-    const result = restaurantService.getRestaurants(search, page, limit);
+    const result = await restaurantService.getRestaurants(search, page, limit);
 
     res.json({
       success: true,
@@ -36,8 +36,8 @@ router.get(
   '/:id',
   validate([param('id').isInt({ min: 1 })]),
   asyncHandler(async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id);
-    const restaurant = restaurantService.getRestaurantById(id);
+    const id = parseInt(req.params.id as string);
+    const restaurant = await restaurantService.getRestaurantById(id);
 
     res.json({
       success: true,
@@ -51,8 +51,8 @@ router.get(
   '/:id/menu',
   validate([param('id').isInt({ min: 1 })]),
   asyncHandler(async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id);
-    const menu = restaurantService.getRestaurantMenu(id);
+    const id = parseInt(req.params.id as string);
+    const menu = await restaurantService.getRestaurantMenu(id);
 
     res.json({
       success: true,

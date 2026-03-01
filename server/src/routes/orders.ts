@@ -16,7 +16,7 @@ router.post(
   validate(orderValidation.create),
   asyncHandler(async (req: Request<{}, {}, CreateOrderBody>, res: Response) => {
     const userId = req.user!.userId;
-    const result = orderService.createOrder(userId, req.body);
+    const result = await orderService.createOrder(userId, req.body);
 
     res.status(201).json({
       success: true,
@@ -41,7 +41,7 @@ router.get(
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
 
-    const result = orderService.getUserOrders(userId, status, page, limit);
+    const result = await orderService.getUserOrders(userId, status, page, limit);
 
     res.json({
       success: true,
@@ -61,9 +61,9 @@ router.get(
   validate([param('id').isInt({ min: 1 })]),
   asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const orderId = parseInt(req.params.id);
+    const orderId = parseInt(req.params.id as string);
 
-    const order = orderService.getOrderById(orderId, userId);
+    const order = await orderService.getOrderById(orderId, userId);
 
     res.json({
       success: true,
@@ -78,9 +78,9 @@ router.put(
   validate([param('id').isInt({ min: 1 })]),
   asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const orderId = parseInt(req.params.id);
+    const orderId = parseInt(req.params.id as string);
 
-    orderService.cancelOrder(orderId, userId);
+    await orderService.cancelOrder(orderId, userId);
 
     res.json({
       success: true,

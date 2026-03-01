@@ -42,7 +42,7 @@ router.get(
   '/profile',
   authenticate,
   asyncHandler(async (req: Request, res: Response) => {
-    const user = authService.getProfile(req.user!);
+    const user = await authService.getProfile(req.user!);
 
     res.json({
       success: true,
