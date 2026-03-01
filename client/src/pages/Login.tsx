@@ -52,7 +52,7 @@ export const Login = () => {
         </button>
 
         <div className="mb-2">
-          <span className="text-4xl font-black text-emerald-600">饭否</span>
+          <span className="text-4xl font-black text-emerald-600">饭饭香</span>
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-1">欢迎回来</h1>
         <p className="text-gray-500 text-sm">登录你的账号，开始点餐</p>

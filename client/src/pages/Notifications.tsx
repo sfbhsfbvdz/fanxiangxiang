@@ -43,7 +43,7 @@ const mockNotifications: Notification[] = [
   {
     id: '4',
     type: 'system',
-    title: '欢迎使用饭否',
+    title: '欢迎使用饭饭香',
     body: '发现校园美食，随时随地点餐配送到宿舍。',
     time: '2天前',
     read: true,

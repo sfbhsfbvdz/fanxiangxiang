@@ -50,7 +50,7 @@ export const Register = () => {
         </button>
 
         <div className="mb-2">
-          <span className="text-4xl font-black text-emerald-600">饭否</span>
+          <span className="text-4xl font-black text-emerald-600">饭饭香</span>
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-1">创建账号</h1>
         <p className="text-gray-500 text-sm">注册后即可享受校园外卖服务</p>

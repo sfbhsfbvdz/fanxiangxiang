@@ -182,7 +182,7 @@ export const Settings = () => {
               <span className="text-sm text-gray-400">v0.0.1</span>
             </div>
             <div className="flex items-center justify-between p-4">
-              <span className="text-sm font-medium text-gray-700">饭否校园外卖</span>
+              <span className="text-sm font-medium text-gray-700">饭饭香校园外卖</span>
               <span className="text-sm text-gray-400">© 2026</span>
             </div>
           </div>
