@@ -1,12 +1,12 @@
 #!/bin/bash
 # 饭饭香后续更新部署脚本
-# 在 ECS /opt/fanfou 目录下执行：bash server/scripts/deploy.sh
+# 在 ECS /opt/fanxiangxiang 目录下执行：bash server/scripts/deploy.sh
 set -e
 
 REPO_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 SERVER_DIR="$REPO_DIR/server"
 CLIENT_DIR="$REPO_DIR/client"
-STATIC_DIR="/var/www/fanfou"
+STATIC_DIR="/var/www/fanxiangxiang"
 
 echo "=== 拉取最新代码 ==="
 cd "$REPO_DIR"

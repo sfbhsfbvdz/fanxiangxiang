@@ -5,7 +5,7 @@
 set -e
 
 REPO_URL="${1:-}"
-APP_DIR="/opt/fanfou"
+APP_DIR="/opt/fanxiangxiang"
 DB_NAME="fanfou"
 DB_USER="fanfou"
 DB_PASSWORD="$(openssl rand -hex 16)"
@@ -74,8 +74,8 @@ npm install --registry=https://registry.npmmirror.com
 
 # 构建前端（VITE_API_URL 为空 = 同域 Nginx 转发，不需要填 IP）
 npm run build --workspace=client
-mkdir -p /var/www/fanfou
-cp -r "$APP_DIR/client/dist/." /var/www/fanfou/
+mkdir -p /var/www/fanxiangxiang
+cp -r "$APP_DIR/client/dist/." /var/www/fanxiangxiang/
 
 # 启动后端
 cd "$APP_DIR/server"
@@ -85,12 +85,12 @@ pm2 save
 pm2 startup systemd -u root --hp /root | tail -1 | bash
 
 echo "=== [8/8] 配置 Nginx ==="
-cat > /etc/nginx/sites-available/fanfou <<NGINX
+cat > /etc/nginx/sites-available/fanxiangxiang <<NGINX
 server {
     listen 80;
     server_name ${SERVER_IP} _;
 
-    root /var/www/fanfou;
+    root /var/www/fanxiangxiang;
     index index.html;
 
     # API 反向代理到 Node.js
@@ -109,12 +109,12 @@ server {
 }
 NGINX
 
-ln -sf /etc/nginx/sites-available/fanfou /etc/nginx/sites-enabled/fanfou
+ln -sf /etc/nginx/sites-available/fanxiangxiang /etc/nginx/sites-enabled/fanxiangxiang
 rm -f /etc/nginx/sites-enabled/default
 nginx -t && systemctl reload nginx
 
 echo "=== 生成 GitHub Actions 部署密钥 ==="
-ssh-keygen -t ed25519 -C "github-actions@fanfou" -f /root/.ssh/github_deploy -N ""
+ssh-keygen -t ed25519 -C "github-actions@fanxiangxiang" -f /root/.ssh/github_deploy -N ""
 cat /root/.ssh/github_deploy.pub >> /root/.ssh/authorized_keys
 chmod 600 /root/.ssh/authorized_keys
 

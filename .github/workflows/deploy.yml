@@ -21,7 +21,7 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
             set -e
-            cd /opt/fanfou
+            cd /opt/fanxiangxiang
 
             echo "=== 拉取最新代码 ==="
             git pull
@@ -31,7 +31,7 @@ jobs:
 
             echo "=== 构建前端 ==="
             npm run build --workspace=client
-            cp -r client/dist/. /var/www/fanfou/
+            cp -r client/dist/. /var/www/fanxiangxiang/
 
             echo "=== 重启后端 ==="
             cd server
