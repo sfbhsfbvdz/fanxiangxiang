@@ -88,8 +88,12 @@ export interface Order {
   status: OrderStatus;
   totalPrice: number;
   deliveryFee: number;
+  tip: number;
+  extraCharge: number;
+  extraChargeNote?: string;
   deliveryAddress: string;
   notes?: string;
+  photoUrl?: string;
   createdAt: string;
   updatedAt: string;
 }

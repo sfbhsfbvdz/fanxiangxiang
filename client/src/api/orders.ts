@@ -13,6 +13,7 @@ interface CreateOrderParams {
   items: { menuItemId: number; quantity: number }[];
   deliveryAddressId: number;
   notes?: string;
+  tip?: number;
 }
 
 export const ordersApi = {

@@ -80,6 +80,35 @@ router.put('/orders/:id/ready', asyncHandler(async (req: Request, res: Response)
   res.json({ success: true, message: '备餐完成，等待骑手取餐' });
 }));
 
+// PUT /api/merchant/orders/:id/extra-charge — 加价
+router.put('/orders/:id/extra-charge', asyncHandler(async (req: Request, res: Response) => {
+  const restaurantId = await getMerchantRestaurantId(req.user!.userId);
+  const orderId = parseInt(req.params.id as string);
+  const { extra_charge, extra_charge_note } = req.body;
+
+  if (extra_charge === undefined || isNaN(parseFloat(extra_charge)) || parseFloat(extra_charge) < 0) {
+    throw new BadRequestError('加价金额不合法');
+  }
+
+  const order = await queryOne<any>(
+    'SELECT * FROM orders WHERE id = ? AND restaurant_id = ?',
+    [orderId, restaurantId]
+  );
+  if (!order) throw new NotFoundError('订单不存在');
+  if (!['paid', 'preparing'].includes(order.status)) {
+    throw new BadRequestError('当前订单状态不允许加价');
+  }
+
+  const amount = parseFloat(extra_charge);
+  const diff = amount - parseFloat(String(order.extra_charge ?? 0));
+  await execute(
+    `UPDATE orders SET extra_charge = ?, extra_charge_note = ?, total_price = total_price + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+    [amount, extra_charge_note || null, diff, orderId]
+  );
+
+  res.json({ success: true, message: '加价成功' });
+}));
+
 // GET /api/merchant/menu — 获取本餐厅菜单
 router.get('/menu', asyncHandler(async (req: Request, res: Response) => {
   const restaurantId = await getMerchantRestaurantId(req.user!.userId);

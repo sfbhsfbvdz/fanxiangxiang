@@ -129,6 +129,40 @@ async function runMigrations(): Promise<void> {
     await pool.query(`ALTER TABLE orders ADD COLUMN rider_id INT`);
     console.log('✅ Migration: added orders.rider_id');
   }
+
+  // Add orders.tip if missing
+  const [tipRows] = await pool.execute<mysql.RowDataPacket[]>(
+    `SELECT COUNT(*) as count FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'orders' AND COLUMN_NAME = 'tip'`,
+    [env.DB_NAME] as any[]
+  );
+  if ((tipRows[0] as { count: number }).count === 0) {
+    await pool.query(`ALTER TABLE orders ADD COLUMN tip DECIMAL(10,2) NOT NULL DEFAULT 0`);
+    console.log('✅ Migration: added orders.tip');
+  }
+
+  // Add orders.photo_url if missing
+  const [photoRows] = await pool.execute<mysql.RowDataPacket[]>(
+    `SELECT COUNT(*) as count FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'orders' AND COLUMN_NAME = 'photo_url'`,
+    [env.DB_NAME] as any[]
+  );
+  if ((photoRows[0] as { count: number }).count === 0) {
+    await pool.query(`ALTER TABLE orders ADD COLUMN photo_url MEDIUMTEXT`);
+    console.log('✅ Migration: added orders.photo_url');
+  }
+
+  // Add orders.extra_charge if missing
+  const [extraRows] = await pool.execute<mysql.RowDataPacket[]>(
+    `SELECT COUNT(*) as count FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'orders' AND COLUMN_NAME = 'extra_charge'`,
+    [env.DB_NAME] as any[]
+  );
+  if ((extraRows[0] as { count: number }).count === 0) {
+    await pool.query(`ALTER TABLE orders ADD COLUMN extra_charge DECIMAL(10,2) NOT NULL DEFAULT 0`);
+    await pool.query(`ALTER TABLE orders ADD COLUMN extra_charge_note VARCHAR(255)`);
+    console.log('✅ Migration: added orders.extra_charge / extra_charge_note');
+  }
 }
 
 export async function closeDatabase(): Promise<void> {

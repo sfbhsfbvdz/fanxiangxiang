@@ -72,6 +72,7 @@ router.put('/orders/:id/picked', asyncHandler(async (req: Request, res: Response
 router.put('/orders/:id/delivered', asyncHandler(async (req: Request, res: Response) => {
   const orderId = parseInt(req.params.id as string);
   const riderId = req.user!.userId;
+  const { photo_url } = req.body;
 
   const order = await queryOne<any>(
     'SELECT * FROM orders WHERE id = ? AND rider_id = ?',
@@ -81,8 +82,8 @@ router.put('/orders/:id/delivered', asyncHandler(async (req: Request, res: Respo
   if (order.status !== 'delivering') throw new BadRequestError('订单状态不正确');
 
   await execute(
-    `UPDATE orders SET status = 'completed', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-    [orderId]
+    `UPDATE orders SET status = 'completed', photo_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+    [photo_url || null, orderId]
   );
 
   res.json({ success: true, message: '配送完成' });

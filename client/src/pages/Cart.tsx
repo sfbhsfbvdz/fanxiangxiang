@@ -18,6 +18,8 @@ export const Cart = () => {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
+  const [tip, setTip] = useState(0);
+  const [customTip, setCustomTip] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -56,7 +58,7 @@ export const Cart = () => {
 
   const deliveryFee = restaurant?.deliveryFee ?? 0;
   const packagingFee = 1.0;
-  const total = totalPrice + deliveryFee + packagingFee;
+  const total = totalPrice + deliveryFee + packagingFee + tip;
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
 
   const handleCheckout = async () => {
@@ -78,6 +80,7 @@ export const Cart = () => {
         items: items.map((item) => ({ menuItemId: item.id, quantity: item.quantity })),
         deliveryAddressId: selectedAddressId,
         notes: notes || undefined,
+        tip: tip > 0 ? tip : undefined,
       });
       clearCart();
       navigate('/success', { state: { orderId: order.id } });
@@ -235,14 +238,60 @@ export const Cart = () => {
 
         {/* Notes */}
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-          <label className="block text-sm font-medium text-gray-700 mb-2">备注</label>
-          <input
-            type="text"
+          <label className="block text-sm font-semibold text-gray-700 mb-2">备注</label>
+          <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="如：少辣，不要香菜..."
-            className="w-full text-sm text-gray-700 outline-none placeholder-gray-400"
+            placeholder="如：少辣，不要香菜，多放酱..."
+            rows={2}
+            maxLength={500}
+            className="w-full text-sm text-gray-700 outline-none placeholder-gray-400 resize-none border border-gray-200 rounded-lg p-2 focus:border-emerald-400 transition-colors"
           />
+          {notes.length > 0 && (
+            <p className="text-right text-xs text-gray-400 mt-1">{notes.length}/500</p>
+          )}
+        </div>
+
+        {/* Tip */}
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+          <label className="block text-sm font-semibold text-gray-700 mb-3">打赏骑手</label>
+          <div className="flex gap-2 flex-wrap">
+            {[0, 1, 2, 5].map((amount) => (
+              <button
+                key={amount}
+                onClick={() => { setTip(amount); setCustomTip(''); }}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                  tip === amount && customTip === ''
+                    ? 'bg-emerald-600 text-white border-emerald-600'
+                    : 'border-gray-200 text-gray-600 hover:border-emerald-400'
+                }`}
+              >
+                {amount === 0 ? '不打赏' : `¥${amount}`}
+              </button>
+            ))}
+            <div className={`flex items-center border rounded-full px-3 py-1 text-sm transition-colors ${
+              customTip !== '' ? 'border-emerald-600' : 'border-gray-200'
+            }`}>
+              <span className="text-gray-500 mr-1">¥</span>
+              <input
+                type="number"
+                min="0"
+                max="999"
+                step="1"
+                value={customTip}
+                onChange={(e) => {
+                  setCustomTip(e.target.value);
+                  const v = parseFloat(e.target.value);
+                  setTip(isNaN(v) ? 0 : Math.max(0, Math.min(999, v)));
+                }}
+                placeholder="自定义"
+                className="w-16 outline-none text-gray-700 placeholder-gray-400 bg-transparent"
+              />
+            </div>
+          </div>
+          {tip > 0 && (
+            <p className="text-xs text-emerald-600 mt-2">已选择打赏 ¥{tip.toFixed(2)}，感谢您对骑手的支持！</p>
+          )}
         </div>
 
         {/* Price Summary */}
@@ -259,6 +308,12 @@ export const Cart = () => {
             <span>打包费</span>
             <span>¥{packagingFee.toFixed(2)}</span>
           </div>
+          {tip > 0 && (
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>骑手打赏</span>
+              <span className="text-emerald-600">¥{tip.toFixed(2)}</span>
+            </div>
+          )}
           <div className="border-t border-gray-100 pt-2 mt-2 flex justify-between font-bold text-lg text-gray-900">
             <span>合计</span>
             <span>¥{total.toFixed(2)}</span>

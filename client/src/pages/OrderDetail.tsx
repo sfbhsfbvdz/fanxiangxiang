@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Clock, Truck, XCircle, MapPin, FileText } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock, Truck, XCircle, MapPin, FileText, Camera, Gift } from 'lucide-react';
 import { OrderWithDetails, OrderStatus } from '../types';
 import { ordersApi } from '../api/orders';
 import { ApiError } from '../api/client';
@@ -143,6 +143,18 @@ export const OrderDetail = () => {
               <span>配送费</span>
               <span>¥{order.deliveryFee.toFixed(2)}</span>
             </div>
+            {order.tip > 0 && (
+              <div className="flex justify-between text-sm text-emerald-600">
+                <span>骑手打赏</span>
+                <span>¥{order.tip.toFixed(2)}</span>
+              </div>
+            )}
+            {order.extraCharge > 0 && (
+              <div className="flex justify-between text-sm text-orange-600">
+                <span>商家加价{order.extraChargeNote ? `（${order.extraChargeNote}）` : ''}</span>
+                <span>¥{order.extraCharge.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-bold text-gray-900">
               <span>合计</span>
               <span>¥{order.totalPrice.toFixed(2)}</span>
@@ -173,6 +185,40 @@ export const OrderDetail = () => {
               <div>
                 <p className="text-sm font-semibold text-gray-900 mb-0.5">备注</p>
                 <p className="text-sm text-gray-600">{order.notes}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tip */}
+        {order.tip > 0 && (
+          <div className="bg-emerald-50 rounded-2xl p-4 shadow-sm border border-emerald-100">
+            <div className="flex items-center gap-3">
+              <div className="bg-emerald-100 p-2 rounded-lg text-emerald-600">
+                <Gift size={16} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-emerald-800">已打赏骑手 ¥{order.tip.toFixed(2)}</p>
+                <p className="text-xs text-emerald-600">感谢您的支持！</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delivery Photo */}
+        {order.photoUrl && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <div className="flex items-start gap-3">
+              <div className="bg-blue-50 p-2 rounded-lg text-blue-500 mt-0.5">
+                <Camera size={16} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-gray-900 mb-2">配送凭证</p>
+                <img
+                  src={order.photoUrl}
+                  alt="配送凭证"
+                  className="w-full max-h-48 object-cover rounded-lg"
+                />
               </div>
             </div>
           </div>

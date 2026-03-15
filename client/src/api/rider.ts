@@ -35,8 +35,8 @@ export const riderApi = {
   pickedOrder: (orderId: number) =>
     apiClient.put<ApiResponse<null>>(`/rider/orders/${orderId}/picked`, {}),
 
-  deliveredOrder: (orderId: number) =>
-    apiClient.put<ApiResponse<null>>(`/rider/orders/${orderId}/delivered`, {}),
+  deliveredOrder: (orderId: number, photo_url?: string) =>
+    apiClient.put<ApiResponse<null>>(`/rider/orders/${orderId}/delivered`, { photo_url }),
 
   getStatus: () =>
     apiClient.get<ApiResponse<RiderStatus>>('/rider/status'),

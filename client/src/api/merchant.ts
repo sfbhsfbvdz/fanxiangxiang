@@ -9,6 +9,9 @@ export interface MerchantOrder {
   status: string;
   total_price: number;
   delivery_fee: number;
+  tip: number;
+  extra_charge: number;
+  extra_charge_note: string | null;
   delivery_address: string;
   notes: string | null;
   created_at: string;
@@ -58,6 +61,9 @@ export const merchantApi = {
 
   readyOrder: (orderId: number) =>
     apiClient.put<ApiResponse<null>>(`/merchant/orders/${orderId}/ready`, {}),
+
+  extraCharge: (orderId: number, extra_charge: number, extra_charge_note?: string) =>
+    apiClient.put<ApiResponse<null>>(`/merchant/orders/${orderId}/extra-charge`, { extra_charge, extra_charge_note }),
 
   getMenu: () =>
     apiClient.get<ApiResponse<MerchantCategory[]>>('/merchant/menu'),

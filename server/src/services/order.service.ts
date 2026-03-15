@@ -11,8 +11,12 @@ interface OrderRow {
   status: string;
   total_price: number;
   delivery_fee: number;
+  tip: number;
+  extra_charge: number;
+  extra_charge_note: string | null;
   delivery_address: string;
   notes: string | null;
+  photo_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -38,7 +42,7 @@ interface AddressRow {
 export class OrderService {
   // Create a new order
   async createOrder(userId: number, data: CreateOrderBody): Promise<OrderWithDetails> {
-    const { restaurantId, items, deliveryAddressId, notes } = data;
+    const { restaurantId, items, deliveryAddressId, notes, tip = 0 } = data;
 
     // Verify restaurant exists
     const restaurant = await restaurantService.getRestaurantById(restaurantId);
@@ -84,9 +88,10 @@ export class OrderService {
       throw new BadRequestError(`订单金额不满足起送价 ¥${restaurant.minOrder}`);
     }
 
-    // Add delivery fee
+    // Add delivery fee and tip
     const deliveryFee = restaurant.deliveryFee;
-    totalPrice += deliveryFee;
+    const tipAmount = Math.max(0, Math.min(tip, 999));
+    totalPrice += deliveryFee + tipAmount;
 
     // Format delivery address
     const deliveryAddress = address.detail
@@ -100,9 +105,9 @@ export class OrderService {
       await conn.beginTransaction();
 
       const [orderResult] = await conn.execute<mysql.ResultSetHeader>(
-        `INSERT INTO orders (user_id, restaurant_id, status, total_price, delivery_fee, delivery_address, notes)
-         VALUES (?, ?, 'pending', ?, ?, ?, ?)`,
-        [userId, restaurantId, totalPrice, deliveryFee, deliveryAddress, notes || null]
+        `INSERT INTO orders (user_id, restaurant_id, status, total_price, delivery_fee, tip, delivery_address, notes)
+         VALUES (?, ?, 'pending', ?, ?, ?, ?, ?)`,
+        [userId, restaurantId, totalPrice, deliveryFee, tipAmount, deliveryAddress, notes || null]
       );
 
       orderId = orderResult.insertId;
@@ -152,7 +157,8 @@ export class OrderService {
     // Get orders with restaurant info
     const orders = await queryAll<OrderRow & { restaurant_name: string; restaurant_image: string | null }>(
       `SELECT o.id, o.user_id, o.restaurant_id, o.status, o.total_price, o.delivery_fee,
-              o.delivery_address, o.notes, o.created_at, o.updated_at,
+              o.tip, o.extra_charge, o.extra_charge_note,
+              o.delivery_address, o.notes, o.photo_url, o.created_at, o.updated_at,
               r.name as restaurant_name, r.image as restaurant_image
        FROM orders o
        JOIN restaurants r ON o.restaurant_id = r.id
@@ -184,7 +190,8 @@ export class OrderService {
   async getOrderById(orderId: number, userId: number): Promise<OrderWithDetails> {
     const order = await queryOne<OrderRow & { restaurant_name: string; restaurant_image: string | null }>(
       `SELECT o.id, o.user_id, o.restaurant_id, o.status, o.total_price, o.delivery_fee,
-              o.delivery_address, o.notes, o.created_at, o.updated_at,
+              o.tip, o.extra_charge, o.extra_charge_note,
+              o.delivery_address, o.notes, o.photo_url, o.created_at, o.updated_at,
               r.name as restaurant_name, r.image as restaurant_image
        FROM orders o
        JOIN restaurants r ON o.restaurant_id = r.id
@@ -261,8 +268,12 @@ export class OrderService {
       status: row.status as OrderStatus,
       totalPrice: parseFloat(String(row.total_price)),
       deliveryFee: parseFloat(String(row.delivery_fee)),
+      tip: parseFloat(String(row.tip ?? 0)),
+      extraCharge: parseFloat(String(row.extra_charge ?? 0)),
+      extraChargeNote: row.extra_charge_note || undefined,
       deliveryAddress: row.delivery_address,
       notes: row.notes || undefined,
+      photoUrl: row.photo_url || undefined,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       restaurant: {

@@ -79,6 +79,10 @@ export const orderValidation = {
       .trim()
       .isLength({ max: 500 })
       .withMessage('备注不能超过500个字符'),
+    body('tip')
+      .optional()
+      .isFloat({ min: 0, max: 999 })
+      .withMessage('打赏金额不合法'),
   ],
 };
 
