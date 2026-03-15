@@ -1,0 +1,53 @@
+export default defineAppConfig({
+  pages: [
+    'pages/home/index',
+    'pages/orders/index',
+    'pages/profile/index',
+    'pages/login/index',
+    'pages/register/index',
+    'pages/restaurant/index',
+    'pages/cart/index',
+    'pages/order-detail/index',
+    'pages/address/index',
+    'pages/merchant-home/index',
+    'pages/merchant-orders/index',
+    'pages/merchant-menu/index',
+    'pages/rider-home/index',
+    'pages/rider-available/index',
+    'pages/rider-delivery/index',
+    'pages/admin-dashboard/index',
+    'pages/admin-orders/index',
+  ],
+  window: {
+    backgroundTextStyle: 'light',
+    navigationBarBackgroundColor: '#ff6b35',
+    navigationBarTitleText: '饭饭香',
+    navigationBarTextStyle: 'white',
+  },
+  tabBar: {
+    color: '#999',
+    selectedColor: '#ff6b35',
+    backgroundColor: '#fff',
+    borderStyle: 'black',
+    list: [
+      {
+        pagePath: 'pages/home/index',
+        text: '首页',
+        iconPath: 'assets/icons/home.png',
+        selectedIconPath: 'assets/icons/home-active.png',
+      },
+      {
+        pagePath: 'pages/orders/index',
+        text: '订单',
+        iconPath: 'assets/icons/orders.png',
+        selectedIconPath: 'assets/icons/orders-active.png',
+      },
+      {
+        pagePath: 'pages/profile/index',
+        text: '我的',
+        iconPath: 'assets/icons/profile.png',
+        selectedIconPath: 'assets/icons/profile-active.png',
+      },
+    ],
+  },
+})

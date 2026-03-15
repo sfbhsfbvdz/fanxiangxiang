@@ -1,0 +1,87 @@
+.rider-home {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding-bottom: 48px;
+
+  &__header {
+    background: linear-gradient(135deg, #07c160 0%, #00b050 100%);
+    padding: 32px 24px 48px;
+  }
+
+  &__title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  &__title {
+    font-size: 40px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  &__logout {
+    font-size: 26px;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  &__status-card {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__status-icon {
+    font-size: 72px;
+  }
+
+  &__status-text {
+    font-size: 32px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  &__vehicle {
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  &__actions {
+    display: flex;
+    gap: 16px;
+    padding: 24px;
+    margin-top: -24px;
+  }
+
+  &__action-card {
+    flex: 1;
+    background: #fff;
+    border-radius: 20px;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+
+  &__action-icon {
+    font-size: 64px;
+  }
+
+  &__action-label {
+    font-size: 28px;
+    color: #333;
+    font-weight: 600;
+  }
+
+  &__toggle {
+    padding: 0 24px;
+    margin-top: 16px;
+  }
+}

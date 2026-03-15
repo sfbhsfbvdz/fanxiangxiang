@@ -1,0 +1,102 @@
+.register-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+
+  &__navbar {
+    background: #ff6b35;
+    color: #fff;
+  }
+
+  &__back {
+    font-size: 48px;
+    color: #fff;
+  }
+
+  &__body {
+    padding: 48px 48px;
+  }
+
+  &__header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 48px;
+  }
+
+  &__logo {
+    font-size: 80px;
+    margin-bottom: 12px;
+  }
+
+  &__title {
+    font-size: 44px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 8px;
+  }
+
+  &__subtitle {
+    font-size: 26px;
+    color: #999;
+  }
+
+  &__form {
+    background: #fff;
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__label {
+    font-size: 26px;
+    color: #666;
+    font-weight: 500;
+  }
+
+  &__input {
+    border: 2px solid #eee;
+    border-radius: 12px;
+    padding: 20px 16px;
+    font-size: 28px;
+    color: #333;
+    background: #fafafa;
+    width: 100%;
+  }
+
+  &__btn {
+    margin-top: 8px;
+    height: 88px !important;
+    font-size: 32px !important;
+    border-radius: 44px !important;
+    background: #ff6b35 !important;
+    border-color: #ff6b35 !important;
+  }
+
+  &__login {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+  }
+
+  &__login-text {
+    font-size: 26px;
+    color: #999;
+  }
+
+  &__login-link {
+    font-size: 26px;
+    color: #ff6b35;
+    font-weight: 600;
+  }
+}

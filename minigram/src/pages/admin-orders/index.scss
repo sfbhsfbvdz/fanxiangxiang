@@ -1,0 +1,132 @@
+.admin-orders {
+  min-height: 100vh;
+  background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+
+  &__header {
+    background: #333;
+    padding: 24px 24px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__title {
+    font-size: 36px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  &__total {
+    font-size: 26px;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  &__tabs {
+    background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  &__content {
+    flex: 1;
+    height: calc(100vh - 200px);
+    padding: 16px 0;
+  }
+
+  &__loading,
+  &__empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 0;
+    font-size: 28px;
+    color: #999;
+  }
+
+  &__order {
+    background: #fff;
+    margin-bottom: 16px;
+    padding: 24px;
+  }
+
+  &__order-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  &__order-id {
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  &__order-status {
+    font-size: 24px;
+    font-weight: 600;
+    padding: 6px 16px;
+    border-radius: 20px;
+
+    &--pending { color: #ff9500; background: #fff8ee; }
+    &--paid { color: #1989fa; background: #e8f3ff; }
+    &--preparing { color: #ff6b35; background: #fff3ee; }
+    &--delivering { color: #07c160; background: #f0fbf5; }
+    &--completed { color: #999; background: #f5f5f5; }
+    &--cancelled { color: #ccc; background: #f5f5f5; }
+  }
+
+  &__order-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  &__order-row {
+    font-size: 26px;
+    color: #333;
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  &__order-key {
+    color: #999;
+    flex-shrink: 0;
+  }
+
+  &__order-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1px solid #f5f5f5;
+  }
+
+  &__order-price {
+    font-size: 32px;
+    font-weight: 700;
+    color: #ff6b35;
+  }
+
+  &__order-date {
+    font-size: 24px;
+    color: #999;
+  }
+
+  &__load-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+  }
+
+  &__load-more-text {
+    font-size: 26px;
+    color: #999;
+  }
+}

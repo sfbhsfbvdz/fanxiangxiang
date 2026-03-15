@@ -1,0 +1,143 @@
+.profile-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding-bottom: 48px;
+
+  &__header {
+    background: linear-gradient(135deg, #ff6b35 0%, #ff9500 100%);
+    padding: 40px 24px 48px;
+  }
+
+  &__user-info,
+  &__guest {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  &__avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 4px solid rgba(255, 255, 255, 0.5);
+    overflow: hidden;
+
+    &--guest {
+      background: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  &__avatar-img {
+    width: 100%;
+    height: 100%;
+  }
+
+  &__avatar-default {
+    font-size: 48px;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  &__user-detail {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__username {
+    font-size: 36px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  &__email {
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  &__role-badge {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 20px;
+    padding: 4px 16px;
+    width: fit-content;
+  }
+
+  &__role-text {
+    font-size: 22px;
+    color: #fff;
+  }
+
+  &__menu {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &__section {
+    background: #fff;
+    padding: 0 24px;
+  }
+
+  &__section-title {
+    font-size: 24px;
+    color: #999;
+    padding: 16px 0 8px;
+    display: block;
+    border-bottom: 1px solid #f5f5f5;
+  }
+
+  &__cell {
+    display: flex;
+    align-items: center;
+    padding: 24px 0;
+    gap: 16px;
+    border-bottom: 1px solid #f9f9f9;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__cell-icon {
+    font-size: 32px;
+    flex-shrink: 0;
+  }
+
+  &__cell-label {
+    font-size: 28px;
+    color: #333;
+    flex: 1;
+  }
+
+  &__cell-val {
+    font-size: 26px;
+    color: #999;
+  }
+
+  &__cell-arrow {
+    font-size: 36px;
+    color: #ccc;
+  }
+
+  &__logout,
+  &__login-action {
+    padding: 32px 24px;
+  }
+
+  &__logout-btn {
+    color: #ee0a24 !important;
+    border-color: #ee0a24 !important;
+    height: 88px !important;
+    border-radius: 16px !important;
+    font-size: 30px !important;
+  }
+}

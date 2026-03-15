@@ -1,0 +1,173 @@
+.admin-dashboard {
+  min-height: 100vh;
+  background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+
+  &__header {
+    background: linear-gradient(135deg, #333 0%, #555 100%);
+    padding: 32px 24px 40px;
+  }
+
+  &__title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__title {
+    font-size: 40px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  &__logout {
+    font-size: 26px;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  &__content {
+    flex: 1;
+    height: calc(100vh - 120px);
+    padding: 16px 0;
+  }
+
+  &__loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 0;
+    font-size: 28px;
+    color: #999;
+  }
+
+  &__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 0 24px 16px;
+    margin-top: -20px;
+  }
+
+  &__stat-card {
+    flex: 1;
+    min-width: calc(50% - 8px);
+    border-radius: 20px;
+    padding: 28px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+
+    &--blue { background: #1989fa; }
+    &--orange { background: #ff6b35; }
+    &--green { background: #07c160; }
+    &--purple { background: #7232dd; }
+  }
+
+  &__stat-val {
+    font-size: 44px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  &__stat-label {
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  &__quick-nav {
+    display: flex;
+    gap: 16px;
+    padding: 0 24px 16px;
+  }
+
+  &__nav-item {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    flex: 1;
+  }
+
+  &__nav-icon {
+    font-size: 48px;
+  }
+
+  &__nav-label {
+    font-size: 28px;
+    color: #333;
+    font-weight: 600;
+  }
+
+  &__section {
+    background: #fff;
+    margin: 0 0 16px;
+  }
+
+  &__section-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid #f5f5f5;
+    display: block;
+  }
+
+  &__restaurant {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #f9f9f9;
+    gap: 16px;
+  }
+
+  &__restaurant-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__restaurant-name {
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  &__restaurant-stats {
+    font-size: 24px;
+    color: #999;
+  }
+
+  &__restaurant-toggle {
+    padding: 10px 20px;
+    border-radius: 20px;
+    flex-shrink: 0;
+
+    &--active {
+      background: #f0fbf5;
+    }
+
+    &--inactive {
+      background: #f5f5f5;
+    }
+  }
+
+  &__restaurant-toggle-text {
+    font-size: 24px;
+    font-weight: 600;
+
+    .admin-dashboard__restaurant-toggle--active & {
+      color: #07c160;
+    }
+
+    .admin-dashboard__restaurant-toggle--inactive & {
+      color: #999;
+    }
+  }
+}

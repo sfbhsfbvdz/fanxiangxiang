@@ -1,0 +1,118 @@
+.rider-available {
+  min-height: 100vh;
+  background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+
+  &__header {
+    background: #07c160;
+    padding: 24px 24px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__title {
+    font-size: 36px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  &__refresh {
+    font-size: 26px;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  &__content {
+    flex: 1;
+    height: calc(100vh - 120px);
+    padding: 16px 0;
+  }
+
+  &__loading,
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 0;
+    gap: 16px;
+  }
+
+  &__empty-icon {
+    font-size: 60px;
+  }
+
+  &__empty-text {
+    font-size: 28px;
+    color: #999;
+  }
+
+  &__order {
+    background: #fff;
+    margin-bottom: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &__order-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__order-id {
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  &__order-fee {
+    font-size: 30px;
+    font-weight: 700;
+    color: #07c160;
+  }
+
+  &__order-restaurant,
+  &__order-address,
+  &__order-amount {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  &__label {
+    font-size: 26px;
+    color: #999;
+    flex-shrink: 0;
+    min-width: 120px;
+  }
+
+  &__value {
+    font-size: 26px;
+    color: #333;
+    flex: 1;
+  }
+
+  &__amount {
+    font-size: 28px;
+    font-weight: 600;
+    color: #ff6b35;
+  }
+
+  &__notes {
+    font-size: 24px;
+    color: #999;
+    background: #f9f9f9;
+    padding: 12px 16px;
+    border-radius: 8px;
+  }
+
+  &__accept-btn {
+    height: 80px !important;
+    border-radius: 12px !important;
+    font-size: 30px !important;
+  }
+}
